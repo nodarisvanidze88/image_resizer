@@ -1,4 +1,4 @@
-from PIL import Image
+from PIL import Image, ImageDraw
 import shutil
 import os
 
@@ -22,6 +22,7 @@ def main():
         ignored_images_path = os.path.join(unresizable_path,i)
         crop_and_resize_image(new_current_path,new_output_path,crop_size,(current_width,current_height),(new_width,new_height),mode='main',new_output=ignored_images_path)
     input()
+    
 def initial_sources(txt):
     while True:
         source_path = input(txt)
@@ -74,19 +75,28 @@ def crop_and_resize_image(input_path, output_path, crop_height, current_sizes, n
     try:
         with Image.open(input_path) as img:
             width, height = img.size
-            if current_sizes[0]!=width and current_sizes[1]!=height and mode == 'test':
+
+            # Check image dimensions
+            if current_sizes[0] != width and current_sizes[1] != height and mode == 'test':
                 return False
-            elif (current_sizes[0]!=width or current_sizes[1]!=height) and mode != 'test':
-                shutil.copy(input_path,new_output)
+            elif (current_sizes[0] != width or current_sizes[1] != height) and mode != 'test':
+                shutil.copy(input_path, new_output)
                 return False
-            elif current_sizes[0]!=width and current_sizes[1]!=height and mode != 'test':
+            elif current_sizes[0] != width and current_sizes[1] != height and mode != 'test':
                 return False
-            cropped_img = img.crop((0, crop_height, width, height))
-            resized_img = cropped_img.resize(new_size, Image.Resampling.LANCZOS)
+
+            # Add white rectangle instead of cropping
+            draw = ImageDraw.Draw(img)
+            draw.rectangle([(0, 0), (width, crop_height)], fill="white")
+
+            # Resize the image
+            resized_img = img.resize(new_size, Image.Resampling.LANCZOS)
             resized_img.save(output_path)
-            if mode=="test":
+
+            if mode == "test":
                 os.startfile(output_path)
                 return True
+
             print(f"Image successfully saved to {output_path}")
     except Exception as e:
         print(f"An error occurred: {e}")
